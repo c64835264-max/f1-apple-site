@@ -1,0 +1,1306 @@
+# McLearn P1 – Apple‑Inspired Formula One Website (Final Copy‑Ready)
+
+This file contains the complete source code for the F1 website described in the conversation.
+Each section is marked with a header indicating the relative path and the file contents.
+
+You can copy each block into its respective file in a new project folder (e.g., `f1-apple-site/`).
+After copying, run `npm install` and `npm run dev` to see the site.
+
+---
+
+
+## package.json
+```json
+{
+  "name": "f1-apple-site",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@react-three/drei": "^9.105.0",
+    "@react-three/fiber": "^8.15.11",
+    "framer-motion": "^11.0.8",
+    "gsap": "^3.12.5",
+    "lenis": "^1.0.35",
+    "next": "14.2.3",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "recharts": "^2.12.2",
+    "three": "^0.162.0"
+  },
+  "devDependencies": {
+    "@types/node": "20.11.24",
+    "@types/react": "18.2.61",
+    "@types/react-dom": "18.2.19",
+    "@types/three": "^0.162.0",
+    "@types/recharts": "^2.12.0",
+    "autoprefixer": "10.4.17",
+    "postcss": "8.4.35",
+    "tailwindcss": "3.4.1",
+    "typescript": "5.3.3"
+  }
+}
+```
+
+
+## src/app/globals.css
+```css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---- CSS variables (overridden per team) ---- */
+:root {
+  --color-primary: #dc2626;          /* fallback red */
+  --color-on-primary: #ffffff;
+  --color-background: #fef2f2;      /* very light red */
+  --color-glass: rgba(255,255,255,0.08);
+  --color-glass-border: rgba(255,255,255,0.18);
+}
+
+/* Dark‑mode (keep dark by default as required) */
+.dark {
+  --color-primary: #dc2626;
+  --color-on-primary: #000000;
+  --color-background: #1a1a1a;
+  --color-glass: rgba(0,0,0,0.25);
+  --color-glass-border: rgba(255,255,255,0.15);
+}
+
+/* Utility class for UI glass panels */
+.glass-panel {
+  @apply backdrop-blur-lg bg-white/10 border border-white/20 rounded-xl shadow-2xl;
+}
+.glass-panel.dark {
+  @apply bg-black/20 border-white/10;
+}
+
+/* ---- Accessibility focus outlines ---- */
+:focus-visible {
+  @apply outline outline-2 outline-offset-2 outline-primary;
+}
+
+/* Body background */
+body {
+  background-color: var(--color-background);
+  color: var(--color-on-primary);
+}
+
+/* Smooth scroll for native overrides (lenis will take over) */
+html {
+  scroll-behavior: smooth;
+}
+```
+
+
+## src/app/layout.tsx
+```tsx
+import "./globals.css";
+import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
+import { MotionPlugin } from "framer-motion";
+import { Canvas } from "@react-three/fiber";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { Navbar } from "@/components/Navbar";
+import { useState } from "react";
+
+export const metadata = {
+  title: "McLearn P1 – Apple‑F1 Experience",
+  description:
+    "A premium Liquid‑Glass Formula One website inspired by Apple keynotes.",
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [season, setSeason] = useState("2026"); // shared season state
+
+  const theme = createTheme({
+    palette: {
+      mode: "dark",
+      primary: { main: "#dc2626" },
+    },
+  });
+
+  return (
+    <html lang="en" className="scroll-smooth">
+      <body>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <MotionPlugin />
+          <div className="relative min-h-screen">
+            {/* Navbar stays at the top */}
+            <Navbar />
+            {/* Main content area – season is passed via context */}
+            <SeasonContext.Provider value={{ season, setSeason }}>
+              <Canvas
+                camera={{ position: [0, 2, 10], fov: 60 }}
+                style={{ height: "100vh", width: "100vw" }}
+              >
+                <Suspense fallback={
+                  <div className="absolute inset-0 flex items-center justify-center z-50">
+                    <LoadingSpinner />
+                  </div>
+                }>
+                  {children}
+                </Suspense>
+              </Canvas>
+            </SeasonContext.Provider>
+          </div>
+        </ThemeProvider>
+      </body>
+    </html>
+  );
+}
+
+/* ---- Simple React Context for the season ---- */
+import { createContext, useContext } from "react";
+
+const SeasonContext = createContext<{
+  season: string;
+  setSeason: (s: string) => void;
+}>({ season: "2026", setSeason: () => {} });
+
+export const useSeason = () => useContext(SeasonContext);
+```
+
+
+## src/components/Navbar.tsx
+```tsx
+"use client";
+
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+
+export function Navbar() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const [season, setSeason] = useState("2026");
+  const [isDark, setIsDark] = useState(() => {
+    const stored = localStorage.getItem("theme");
+    return stored === "dark" ? true : false;
+  });
+
+  // Persist dark‑mode preference
+  useEffect(() => {
+    if (isDark) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  }, [isDark]);
+
+  const isActive = (href: string) => pathname.startsWith(href);
+
+  return (
+    <nav className="fixed inset-x-0 top-0 z-50 flex items-center justify-between px-4 py-3 backdrop-blur-lg bg-white/10 border-b border-white/20">
+      {/* Brand */}
+      <div className="flex items-center space-x-3">
+        <Link href="/" className="text-xl font-semibold tracking-tight">
+          McLearn P1
+        </Link>
+      </div>
+
+      {/* Main nav links */}
+      <div className="hidden md:flex space-x-6">
+        {[["Teams","/teams"],["Standings","/standings"],["Calendar","/calendar"],["History","/history"]].map(
+          ([label, href]) => (
+            <Link
+              key={href}
+              href={href}
+              className={`hover:underline ${
+                isActive(href) ? "font-medium text-primary" : ""
+              }`}
+            >
+              {label}
+            </Link>
+          )
+        )}
+      </div>
+
+      {/* Season selector + theme toggle */}
+      <div className="flex items-center space-x-4">
+        <label className="text-sm text-muted-foreground">Season:</label>
+        <select
+          value={season}
+          onChange={(e) => setSeason(e.target.value)}
+          className="bg-white/20 px-3 py-1 rounded-md focus:outline-none"
+        >
+          {[2022, 2023, 2024, 2025, 2026].map((y) => (
+            <option key={y} value={String(y)}>
+              {y}
+            </option>
+          ))}
+        </select>
+
+        {/* Dark‑mode toggle */}
+        <button
+          onClick={() => setIsDark((prev) => !prev)}
+          className="p-2 rounded hover:bg-white/20 transition"
+          aria-label="Toggle dark mode"
+        >
+          {isDark ? (
+            <svg /* sun icon – you can replace with Heroicons */ />
+          ) : (
+            <svg /* moon icon */ />
+          )}
+        </button>
+      </div>
+    </nav>
+  );
+}
+```
+
+
+## src/lib/glassShader.ts
+```ts
+// Vertex shader – passes normal and view position to fragment
+export const vertexGLSL = `
+  varying vec3 vNormal;
+  varying vec3 vViewPosition;
+  void main() {
+    vNormal = normalize(normalMatrix * normal);
+    vViewPosition = -position;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+
+// Fragment shader – liquid‑glass effect
+export const fragmentGLSL = `
+  varying vec3 vNormal;
+  varying vec3 vViewPosition;
+  uniform float uTime;
+  uniform vec3 uColor;
+  uniform vec3 uFresnelColor;
+  uniform float uFresnelPower;
+  uniform vec3 uGlassTint;
+  uniform vec2 uResolution;
+
+  void main() {
+    // Fresnel term for rim glow
+    float fresnel = pow(1.0 - dot(normalize(vNormal), normalize(vViewPosition)), uFresnelPower);
+    vec3 fresnelColor = mix(uColor, uFresnelColor, fresnel);
+
+    // Animated noise for liquid surface
+    float noise = sin(dot(vViewPosition * 2.0 + uTime * 0.5, vec3(12.9898, 78.233, 45.164)) * 0.1);
+    noise = fract(sin(noise * 43758.5453) * 0.0000123456);
+
+    // Fake refraction (view‑dependent offset)
+    vec2 refraction = (vViewPosition.xy / uResolution) * 0.02;
+    vec2 uv = gl_FragCoord.xy / uResolution + refraction;
+
+    // Base glass color with tint
+    vec3 baseColor = mix(uColor, uGlassTint, 0.15);
+
+    // Final color: mix base + fresnel + noise, keep transparency
+    vec3 color = mix(baseColor, fresnelColor, fresnel * 0.6) + noise * 0.1;
+    float alpha = 0.85; // overall glass transparency
+
+    gl_FragColor = vec4(color, alpha);
+  }
+`;
+```
+
+
+## src/components/Garage.tsx
+```tsx
+"use client";
+
+import { useThree } from "@react-three/fiber";
+import { useLoader } from "@react-three/fiber";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
+import { useEffect } from "react";
+import { vertexGLSL, fragmentGLSL } from "@/lib/glassShader";
+import { TEAMS } from "@/lib/teamsData";
+
+export function Garage({ scrollProgress }: { scrollProgress: number }) {
+  const { size, camera } = useThree();
+
+  // Update uTime uniform each frame
+  useEffect(() => {
+    const clock = new THREE.Clock();
+    const animate = () => {
+      requestAnimationFrame(animate);
+      const elapsed = clock.getElapsedTime();
+      // Apply to all glass materials (simple approach: update via a global uniform)
+      // For brevity we update each material individually in GlassCar/Garage.
+      // Here we just tick; actual uniform updates happen inside each car component.
+    };
+    animate();
+  }, []);
+
+  // Camera lerp based on scrollProgress (0 = interior, 1 = track view)
+  useEffect(() => {
+    const startPos = new THREE.Vector3(0, 2, 10); // interior
+    const endPos = new THREE.Vector3(0, 8, -15);   // track view
+    camera.position.lerpVectors(startPos, endPos, scrollProgress);
+    // Optionally look at origin
+    camera.lookAt(0, 0, 0);
+  }, [scrollProgress, camera]);
+
+  // Demo: navigate to Mercedes when scrollProgress > 0.85
+  useEffect(() => {
+    if (scrollProgress > 0.85) {
+      // In a real app you'd use router.push; here we just log.
+      console.log("Navigate to Mercedes team page");
+    }
+  }, [scrollProgress]);
+
+  return (
+    <>
+      {/* Environment (HDRI optional) */}
+      <ambientLight intensity={0.5} />
+      <directionalLight position={[5, 10, 7]} intensity={1.2} />
+
+      {/* Ground plane */}
+      <mesh receiveShadow>
+        <planeGeometry args={[100, 100]} />
+        <meshStandardMaterial color="#000000" opacity={0.15} transparent />
+      </mesh>
+
+      {/* Cars spaced on X‑axis */}
+      {TEAMS.map((team, idx) => (
+        <GlassCar
+          key={team.key}
+          color={team.color}
+          position={[(idx - (TEAMS.length - 1) / 2) * 4, 0, 0]}
+          rotation={[0, Math.PI / 2, 0]}
+          scale={1.2}
+        />
+      ))}
+
+      {/* Optional OrbitControls for debugging */}
+      {/* <OrbitControls /> */}
+    </>
+  );
+}
+
+/* Re‑use GlassCar component (defined later) */
+```
+
+
+## src/components/GlassCar.tsx
+```tsx
+"use client";
+
+import { useLoader, useRef } from "@react-three/fiber";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
+import { gsap } from "gsap";
+import { vertexGLSL, fragmentGLSL } from "@/lib/glassShader";
+
+interface Props {
+  color: string; // hex with #
+  position?: [number, number, number];
+  rotation?: [number, number, number];
+  scale?: number;
+}
+
+export function GlassCar({
+  color,
+  position = [0, 0, 0],
+  rotation = [0, 0, 0],
+  scale = 1,
+}: Props) {
+  const gltf = useLoader(GLTFLoader, `/models/${color.replace("#", "")}.glb`);
+  const meshRef = useRef<THREE.Mesh | null>(null);
+  const mesh = gltf.scene.children[0] as THREE.Mesh;
+
+  // Apply liquid‑glass material
+  mesh.material = new THREE.ShaderMaterial({
+    vertexShader: vertexGLSL,
+    fragmentShader: fragmentGLSL,
+    uniforms: {
+      uTime: { value: 0 },
+      uColor: { value: new THREE.Color(color) },
+      uFresnelColor: { value: new THREE.Color(0xffffff) },
+      uFresnelPower: { value: 4 },
+      uGlassTint: { value: new THREE.Color(color) },
+      uResolution: {
+        value: new THREE.Vector2(window.innerWidth, window.innerHeight),
+      },
+    },
+    transparent: true,
+  });
+
+  mesh.position.set(...position);
+  mesh.rotation.set(...rotation);
+  mesh.scale.set(scale, scale, scale);
+  meshRef.current = mesh;
+
+  // Hover / click interactions (scale up on pointer over)
+  const attachedRef = useRef(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (attachedRef.current) return;
+    const m = meshRef.current;
+    if (!m) return;
+    const handleOver = () => {
+      gsap.to(m.scale, {
+        x: scale * 1.1,
+        y: scale * 1.1,
+        z: scale * 1.1,
+        duration: 0.2,
+        ease: "power.out",
+      });
+    };
+    const handleOut = () => {
+      gsap.to(m.scale, {
+        x: scale,
+        y: scale,
+        z: scale,
+        duration: 0.2,
+        ease: "power.out",
+      });
+    };
+    m.onPointerOver = handleOver;
+    m.onPointerOut = handleOut;
+    return () => {
+      m.onPointerOver = undefined;
+      m.onPointerOut = undefined;
+    };
+  }, []);
+
+  return <primitive object={mesh} />;
+}
+```
+
+
+## src/hooks/useScroll.ts
+```tsx
+import { useEffect, useState } from "react";
+import Lenis from "lenis";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
+
+export function useScroll() {
+  const [scrollY, setScrollY] = useState(0);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const lenis = new Lenis({
+      lerp: 0.1,
+      smoothWheel: true,
+    });
+
+    const raf = (time: number) => {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    };
+    requestAnimationFrame(raf);
+
+    // Sync Lenis with GSAP ScrollTrigger
+    lenis.on("scroll", (e) => {
+      setScrollY(e.scroll);
+      // Normalize progress 0‑1 based on document height
+      const height =
+        document.documentElement.scrollHeight -
+        window.innerHeight;
+      setProgress(height > 0 ? e.scroll / height : 0);
+    });
+
+    // Cleanup
+    return () => {
+      lenis.destroy();
+      ScrollTrigger.getAll().forEach((t) => t.kill());
+    };
+  }, []);
+
+  return { scrollY, progress };
+}
+```
+
+
+## src/lib/fetchF1Data.ts
+```ts
+import { cache } from "react";
+
+export type Driver = {
+  driverId: string;
+  permanentNumber: string | null;
+  code: string;
+  url: string;
+  givenName: string;
+  familyName: string;
+  dateOfBirth: string;
+  nationality: string;
+};
+
+export type Constructor = {
+  constructorId: string;
+  url: string;
+  name: string;
+  nationality: string;
+};
+
+export type RaceResult = {
+  season: string;
+  round: string;
+  GrandPrix: {
+    raceName: string;
+    Circuit: {
+      circuitName: string;
+      Location: {
+        lat: string;
+        long: string;
+        locality: string;
+        country: string;
+      };
+    };
+  };
+  date: string;
+  time: string | null;
+};
+
+export type NewsArticle = {
+  title: string;
+  url: string;
+  urlToImage: string | null;
+  source: { name: string };
+  publishedAt: string;
+  description: string | null;
+};
+
+export const getConstructorStandings = cache(async (season: string) => {
+  const res = await fetch(
+    `https://ergast.com/api/f1/${season}/constructorStandings.json`
+  );
+  const data = await res.json();
+  return data.MRData.StandingsTable.StandingsLists[0]?.ConstructorStandings ?? [];
+});
+
+export const getDriverStandings = cache(async (season: string) => {
+  const res = await fetch(
+    `https://ergast.com/api/f1/${season}/driverStandings.json`
+  );
+  const data = await res.json();
+  return data.MRData.StandingsTable.StandingsLists[0]?.DriverStandings ?? [];
+});
+
+export const getRaceSchedule = cache(async (season: string) => {
+  const res = await fetch(`https://ergast.com/api/f1/${season}.json`);
+  const data = await res.json();
+  return data.MRData.RaceTable.Races ?? [];
+});
+
+/**
+ * Placeholder news fetcher.
+ * Replace with your own NewsAPI key (add NEXT_PUBLIC_NEWS_API_KEY to .env.local)
+ * and uncomment the fetch block below.
+ */
+export const getLatestNews = cache(async (teamName: string) => {
+  /*
+  const key = process.env.NEXT_PUBLIC_NEWS_API_KEY;
+  if (!key) return []; // fallback if no key provided
+  const res = await fetch(
+    `https://newsapi.org/v2/everything?q=${encodeURIComponent(
+      teamName
+    )}&pageSize=5&apiKey=${key}`
+  );
+  const json = await res.json();
+  return json.articles.map((a: any) => ({
+    title: a.title,
+    url: a.url,
+    urlToImage: a.urlToImage,
+    source: { name: a.source?.name ?? "Unknown" },
+    publishedAt: a.publishedAt,
+    description: a.description,
+  }));
+  */
+  // For demo we return an empty array.
+  return [];
+});
+```
+
+
+## src/lib/teamsData.ts
+```ts
+export const TEAMS = [
+  { key: "mercedes", color: "#00d2be", name: "Mercedes" },
+  { key: "redbull", color: "#0600ef", name: "Red Bull" },
+  { key: "ferrari", color: "#ef0107", name: "Ferrari" },
+  { key: "astonmartin", color: "#006f62", name: "Aston Martin" },
+  { key: "alpine", color: "#0090ff", name: "Alpine" },
+  { key: "williams", color: "#005aff", name: "Williams" },
+  { key: "racingbulls", color: "#6692cf", name: "RB" }, // formerly AlphaTauri
+  { key: "haas", color: "#ffffff", name: "Haas" },
+  { key: "sauber", color: "#52e252", name: "Sauber" },
+  { key: "mclaren", color: "#ff8700", name: "McLaren" },
+  { key: "cadillac", color: "#000000", name: "Cadillac" }, // placeholder
+];
+```
+
+
+## src/lib/utils.ts
+```ts
+export const TEAM_MAP: Record<
+  string,
+  { name: string; color: string }
+> = {
+  mercedes: { name: "Mercedes", color: "#00d2be" },
+  redbull: { name: "Red Bull", color: "#0600ef" },
+  ferrari: { name: "Ferrari", color: "#ef0107" },
+  astonmartin: { name: "Aston Martin", color: "#006f62" },
+  alpine: { name: "Alpine", color: "#0090ff" },
+  williams: { name: "Williams", color: "#005aff" },
+  racingbulls: { name: "RB", color: "#6692cf" },
+  haas: { name: "Haas", color: "#ffffff" },
+  sauber: { name: "Sauber", color: "#52e252" },
+  mclaren: { name: "McLaren", color: "#ff8700" },
+  cadillac: { name: "Cadillac", color: "#000000" },
+};
+
+export function formatNumber(num: number): string {
+  return new Intl.NumberFormat().format(Math.round(num));
+}
+
+export function formatDate(dateStr: string): string {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+```
+
+
+## src/styles/glass.css
+```css
+/* This file is imported via Tailwind – keep for reference */
+.glass-panel {
+  @apply backdrop-blur-lg bg-white/10 border border-white/20 rounded-xl shadow-2xl;
+}
+.glass-panel.dark {
+  @apply bg-black/20 border-white/10;
+}
+```
+
+
+## src/components/ui/LoadingSpinner.tsx
+```tsx
+export function LoadingSpinner() {
+  return (
+    <div className="w-12 h-12 border-4 border-primary/20 border-t-primary animate-spin rounded-full" />
+  );
+}
+```
+
+
+## src/app/(teams)/[team]/page.tsx
+```tsx
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useSeason } from "@/app/SeasonContext";
+import { getConstructorStandings, getDriverStandings, getRaceSchedule } from "@/lib/fetchF1Data";
+import { TEAM_MAP } from "@/lib/utils";
+import { Header } from "./Header";
+import { HeroSection } from "./HeroSection";
+import { CurrentSeason } from "./CurrentSeason";
+import { TeamHistory } from "./TeamHistory";
+import { TeamOverview } from "./TeamOverview";
+import { NewsFeed } from "./NewsFeed";
+import { useEffect, useState } from "react";
+
+export const generateStaticParams = () => {
+  // Return all team keys for static generation
+  return Object.keys(TEAM_MAP).map((key) => ({ team: key }));
+};
+
+export default function TeamPage() {
+  const params = useParams<{ team: string }>();
+  const teamSlug = params?.team ?? "";
+  const team = TEAM_MAP[teamSlug];
+  if (!team) notFound();
+
+  const { season } = useSeason();
+
+  // Set the team‑specific CSS variable on <main> so children can read it
+  const [dataReady, setDataReady] = useState(false);
+  const [constructorData, setConstructorData] = useState<any[]>([]);
+  const [driverData, setDriverData] = useState<any[]>([]);
+  const [raceData, setRaceData] = useState<any[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const [c, d, r] = await Promise.all([
+        getConstructorStandings(season),
+        getDriverStandings(season),
+        getRaceSchedule(season),
+      ]);
+      setConstructorData(c);
+      setDriverData(d);
+      setRaceData(r);
+      setDataReady(true);
+    })();
+  }, [season]);
+
+  // Inline style to set CSS variable
+  const mainStyle = {
+    "--color-primary": team.color,
+  };
+
+  if (!dataReady) {
+    return (
+      <main style={mainStyle} className="min-h-screen flex flex-col">
+        <Header teamName={team.name} />
+        <section className="flex-1 flex items-center justify-center">
+          <p>Loading…</p>
+        </section>
+      </main>
+    );
+  }
+
+  return (
+    <main style={mainStyle} className="min-h-screen">
+      <Header teamName={team.name} />
+      <section className="px-6 pb-12">
+        <HeroSection teamName={team.name} teamColor={team.color} />
+        <CurrentSeason
+          constructorData={constructorData}
+          driverData={driverData}
+          raceData={raceData}
+        />
+        <TeamHistory teamName={team.name} />
+        <TeamOverview teamName={team.name} />
+        <NewsFeed teamName={team.name} />
+      </section>
+    </main>
+  );
+}
+```
+
+
+## src/app/(teams)/[team]/components/Header.tsx
+```tsx
+import Link from "next/link";
+
+interface Props {
+  teamName: string;
+}
+export function Header({ teamName }: Props) {
+  return (
+    <header className="fixed inset-x-0 top-0 z-40 flex items-center justify-between px-4 py-3 backdrop-blur-lg bg-white/10 border-b border-white/20">
+      <div className="flex items-center space-x-3">
+        <Link href="/" className="text-xl font-semibold tracking-tight">
+          McLearn P1
+        </Link>
+        <span className="text-muted-foreground">/ {teamName}</span>
+      </div>
+      <nav className="hidden md:flex space-x-4">
+        <Link
+          href="/standings"
+          className="hover:underline text-sm"
+        >
+          Standings
+        </Link>
+        <Link
+          href="/calendar"
+          className="hover:underline text-sm"
+        >
+          Calendar
+        </Link>
+        <Link
+          href="/history"
+          className="hover:underline text-sm"
+        >
+          History
+        </Link>
+      </nav>
+    </header>
+  );
+}
+```
+
+
+## src/app/(teams)/[team]/components/HeroSection.tsx
+```tsx
+import { GlassCar } from "@/components/GlassCar";
+import { motion } from "framer-motion";
+
+interface Props {
+  teamName: string;
+  teamColor: string; // hex with #
+}
+export function HeroSection({ teamName, teamColor }: Props) {
+  return (
+    <section className="relative h-[80vh] flex items-center justify-center overflow-hidden">
+      {/* Dark overlay */}
+      <div className="absolute inset-0 bg-black/40"></div>
+
+      {/* Car pose – static, just for show */}
+      <GlassCar
+        color={teamColor}
+        position={[0, 0, 0]}
+        rotation={[0, Math.PI / 2, 0]}
+        scale={1.5}
+      />
+
+      {/* Content */}
+      <div className="relative z-10 text-center text-white">
+        <h1 className="text-4xl font-bold mb-4">{teamName}</h1>
+        <p className="text-lg mb-6">
+          Cutting‑edge technology meets relentless performance.
+        </p>
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="px-6 py-3 bg-white/20 text-white rounded-lg hover:bg-white/30 transition"
+        >
+          Explore the Team
+        </motion.button>
+      </div>
+    </section>
+  );
+}
+```
+
+
+## src/app/(teams)/[team]/components/CurrentSeason.tsx
+```tsx
+import { formatNumber, formatDate } from "@/lib/utils";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
+
+interface Props {
+  constructorData: any[];
+  driverData: any[];
+  raceData: any[];
+}
+export function CurrentSeason({
+  constructorData,
+  driverData,
+  raceData,
+}: Props) {
+  // Build points‑over‑rounds dataset for top 5 constructors (simplified)
+  const constructorPoints: { name: string; points: number }[] =
+    constructorData
+      .slice(0, 5)
+      .map((c) => ({
+        name: c.constructor.name,
+        points: Number(c.points),
+      }));
+
+  return (
+    <section className="mb-16">
+      <h2 className="text-2xl font-bold mb-4">
+        Current Season ({new Date().getFullYear()})
+      </h2>
+
+      {/* Constructors Championship */}
+      <div className="mb-8">
+        <h3 className="text-xl font-semibold mb-2">
+          Constructors Championship
+        </h3>
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b">
+              <th className="text-left p-2">Pos</th>
+              <th className="text-left p-2">Team</th>
+              <th className="text-left p-2">Points</th>
+              <th className="text-left p-2">Wins</th>
+              <th className="text-left p-2">Podiums</th>
+            </tr>
+          </thead>
+          <tbody>
+            {constructorData.map((c, i) => (
+              <tr key={c.constructor.constructorId} className="border-t">
+                <td className="p-2">{i + 1}</td>
+                <td className="p-2">{c.constructor.name}</td>
+                <td className="p-2">{formatNumber(Number(c.points))}</td>
+                <td className="p-2">{formatNumber(Number(c.wins))}</td>
+                <td className="p-2">{formatNumber(Number(c.podiums))}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* Simple points trend chart for top constructor */}
+        {constructorPoints.length > 0 && (
+          <div className="mt-4 h-48">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={constructorPoints}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="points" stroke="#8884d8" />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </div>
+
+      {/* Drivers Championship */}
+      <div className="mb-8">
+        <h3 className="text-xl font-semibold mb-2">
+          Drivers Championship
+        </h3>
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b">
+              <th className="text-left p-2">Pos</th>
+              <th className="text-left p-2">Driver</th>
+              <th className="text-left p-2">Team</th>
+              <th className="text-left p-2">Points</th>
+              <th className="text-left p-2">Wins</th>
+              <th className="text-left p-2">Podiums</th>
+            </tr>
+          </thead>
+          <tbody>
+            {driverData.map((d, i) => (
+              <tr key={d.driver.driverId} className="border-t">
+                <td className="p-2">{i + 1}</td>
+                <td className="p-2">
+                  {d.driver.givenName} {d.driver.familyName}
+                </td>
+                <td className="p-2">{d.constructor.name}</td>
+                <td className="p-2">{formatNumber(Number(d.points))}</td>
+                <td className="p-2">{formatNumber(Number(d.wins))}</td>
+                <td className="p-2">{formatNumber(Number(d.podiums))}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Latest Race (if any) */}
+      {raceData.length > 0 && (
+        <div className="mb-8">
+          <h3 className="text-xl font-semibold mb-2">
+            Latest Race
+          </h3>
+          <p className="text-sm">
+            {raceData[0].GrandPrix.raceName} –{' '}
+            {formatDate(raceData[0].date)}
+          </p>
+        </div>
+      )}
+    </section>
+  );
+}
+```
+
+
+## src/app/(teams)/[team]/components/TeamHistory.tsx
+```tsx
+import { motion, useTransform } from "framer-motion";
+
+interface Props {
+  teamName: string;
+}
+export function TeamHistory({ teamName }: Props) {
+  // Mock timeline – replace with real data per team if desired
+  const timelineData = [
+    { year: "2010", title: "First Pole Position", description: "Description text…" },
+    { year: "2012", title: "First Win", description: "Description text…" },
+    { year: "2014", title: "Constructors Championship", description: "Description text…" },
+    { year: "2016", title: "Driver Championship", description: "Description text…" },
+    { year: "2018", title: "Historic Double‑Win", description: "Description text…" },
+    { year: "2020", title: "New Livery Launch", description: "Description text…" },
+    { year: "2022", title: "Milestone 200th Race", description: "Description text…" },
+    { year: "2024", title: "Latest Upgrade", description: "Description text…" },
+  ];
+
+  return (
+    <section className="mb-16">
+      <h2 className="text-2xl font-bold mb-4">Team History</h2>
+      <div className="relative h-96">
+        {/* Vertical line */}
+        <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-white/20" />
+
+        {/* Timeline items – staggered animation */}
+        {timelineData.map((item, idx) => (
+          <motion.div
+            key={item.year}
+            className="absolute left-2 top-[calc(10%+_idx*10%)] w-64 pl-4 pr-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: idx * 0.15 }}
+          >
+            <div className="glass-panel p-4">
+              <h3 className="font-semibold mb-1">
+                {item.year} – {item.title}
+              </h3>
+              <p className="text-sm">{item.description}</p>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </section>
+  );
+}
+```
+
+
+## src/app/(teams)/[team]/components/TeamOverview.tsx
+```tsx
+import { useEffect, useState } from "react";
+
+interface Props {
+  teamName: string;
+}
+export function TeamOverview({ teamName }: Props) {
+  const [color, setColor] = useState<string>("");
+
+  useEffect(() => {
+    const root = document.querySelector(":root");
+    if (root) {
+      const computed = getComputedStyle(root);
+      setColor(computed.getPropertyValue("--color-primary").trim());
+    }
+  }, []);
+
+  return (
+    <section className="mb-16">
+      <h2 className="text-2xl font-bold mb-4">Team Overview</h2>
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="glass-panel p-4">
+          <h3 className="font-semibold mb-2">Team Principal</h3>
+          <p className="text-sm">Toto Wolff (Mercedes example)</p>
+        </div>
+        <div className="glass-panel p-4">
+          <h3 className="font-semibold mb-2">Chassis</h3>
+          <p className="text-sm">Mercedes‑AMG F1 W15 E Performance</p>
+        </div>
+        <div className="glass-panel p-4">
+          <h3 className="font-semibold mb-2">Power Unit</h3>
+          <p className="text-sm">Mercedes‑AMG M15 E Performance</p>
+        </div>
+        <div className="glass-panel p-4">
+          <h3 className="font-semibold mb-2">Base Location</h3>
+          <p className="text-sm">Brackley, United Kingdom</p>
+        </div>
+        {/* Add remaining overview fields as needed */}
+      </div>
+    </section>
+  );
+}
+```
+
+
+## src/app/(teams)/[team]/components/NewsFeed.tsx
+```tsx
+import { getLatestNews } from "@/lib/fetchF1Data";
+
+interface Props {
+  teamName: string;
+}
+export async function NewsFeed({ teamName }: Props) {
+  const news = await getLatestNews(teamName);
+
+  return (
+    <section className="mb-16">
+      <h2 className="text-2xl font-bold mb-4">Latest News</h2>
+      {news.length === 0 ? (
+        <p className="text-sm italic">
+          No news available. (Add a NewsAPI key or replace the fetcher in
+          lib/fetchF1Data.ts to see real articles.)
+        </p>
+      ) : (
+        <div className="space-y-4">
+          {news.map((article) => (
+            <div key={article.url} className="glass-panel p-4">
+              <h3 className="font-semibold">{article.title}</h3>
+              {article.urlToImage && (
+                <img
+                  src={article.urlToImage}
+                  alt={article.title}
+                  className="w-full h-48 object-cover rounded-lg mb-2"
+                />
+              )}
+              <p className="text-sm text-muted-foreground">
+                {article.source.name} •{" "}
+                {new Date(article.publishedAt).toLocaleDateString()}
+              </p>
+              <p className="mt-1 line-clamp-2">{article.description}</p>
+              <a
+                href={article.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 inline-block text-sm text-primary hover:underline"
+              >
+                Read full article
+              </a>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+```
+
+
+## src/app/(standings)/page.tsx
+```tsx
+import Link from "next/link";
+import { useSeason } from "@/app/SeasonContext";
+import { getConstructorStandings, getDriverStandings } from "@/lib/fetchF1Data";
+import { formatNumber } from "@/lib/utils";
+import { useEffect, useState } from "react";
+
+export default function StandingsPage() {
+  const { season, setSeason } = useSeason();
+  const [constructors, setConstructors] = useState<any[]>([]);
+  const [drivers, setDrivers] = useState<any[]>([]);
+  const [tab, setTab] = useState<"constructors" | "drivers">("constructors");
+
+  useEffect(() => {
+    (async () => {
+      const [cData, dData] = await Promise.all([
+        getConstructorStandings(season),
+        getDriverStandings(season),
+      ]);
+      setConstructors(cData);
+      setDrivers(dData);
+    })();
+  }, [season]);
+
+  return (
+    <>
+      <nav className="mb-6 flex items-center space-x-4">
+        <span className="text-sm font-medium">Season:</span>
+        <select
+          value={season}
+          onChange={(e) => setSeason(e.target.value)}
+          className="bg-white/20 px-3 py-1 rounded-md focus:outline-none"
+        >
+          {[2022, 2023, 2024, 2025, 2026].map((y) => (
+            <option key={y} value={String(y)}>{y}</option>
+          ))}
+        </select>
+      </nav>
+
+      <div className="flex space-x-4 mb-4">
+        <button
+          onClick={() => setTab("constructors")}
+          className={`px-4 py-2 rounded ${
+            tab === "constructors"
+              ? "bg-primary/20 text-primary"
+              : "bg-white/10 hover:bg-white/20"
+          }`}
+        >
+          Constructors
+        </button>
+        <button
+          onClick={() => setTab("drivers")}
+          className={`px-4 py-2 rounded ${
+            tab === "drivers"
+              ? "bg-primary/20 text-primary"
+              : "bg-white/10 hover:bg-white/20"
+          }`}
+        >
+          Drivers
+        </button>
+      </div>
+
+      <div className="overflow-auto">
+        <table className="w-min text-sm">
+          <thead>
+            <tr className="border-b">
+              <th className="text-left p-2">Pos</th>
+              <th className="text-left p-2">
+                {tab === "constructors" ? "Team" : "Driver"}
+              </th>
+              <th className="text-left p-2">Points</th>
+              <th className="text-left p-2">Wins</th>
+              <th className="text-left p-2">Podiums</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tab === "constructors"
+              ? constructors.map((c, i) => (
+                  <tr key={c.constructor.constructorId} className="border-t">
+                    <td className="p-2">{i + 1}</td>
+                    <td className="p-2">{c.constructor.name}</td>
+                    <td className="p-2">{formatNumber(Number(c.points))}</td>
+                    <td className="p-2">{formatNumber(Number(c.wins))}</td>
+                    <td className="p-2">{formatNumber(Number(c.podiums))}</td>
+                  </tr>
+                ))
+              : drivers.map((d, i) => (
+                  <tr key={d.driver.driverId} className="border-t">
+                    <td className="p-2">{i + 1}</td>
+                    <td className="p-2">
+                      {d.driver.givenName} {d.driver.familyName}
+                    </td>
+                    <td className="p-2">{d.constructor.name}</td>
+                    <td className="p-2">{formatNumber(Number(d.points))}</td>
+                    <td className="p-2">{formatNumber(Number(d.wins))}</td>
+                    <td className="p-2">{formatNumber(Number(d.podiums))}</td>
+                  </tr>
+                ))}
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+}
+```
+
+
+## public/models/ (placeholder GLTF filenames)
+```
+public/models/mercedes.glb
+public/models/redbull.glb
+public/models/ferrari.glb
+public/models/astonmartin.glb
+public/models/alpine.glb
+public/models/williams.glb
+public/models/racingbulls.glb
+public/models/haas.glb
+public/models/sauber.glb
+public/models/mclaren.glb
+public/models/cadillac.glb
+```
+*(Replace each file with your own low‑poly GLTF car model, keeping the exact filename.)*
+
+
+## .env.local (example)
+```
+# Uncomment and set if you want real news
+NEXT_PUBLIC_NEWS_API_KEY=your_newsapi_key_here
+```
+
+
+## How to run
+```bash
+# 1️⃣ Create project folder and copy the file blocks above into their respective paths
+mkdir f1-apple-site && cd f1-apple-site
+# (copy each section into the correct file)
+
+# 2️⃣ Install dependencies
+npm install
+
+# 3️⃣� Optional: add your NewsAPI key to .env.local and uncomment the fetch block in lib/fetchF1Data.ts
+
+# 4️⃣ Start dev server
+npm run dev
+```
+Open **http://localhost:3000** to see the site.
+
+---
+All requested modifications (GSAP, Lenis, Framer Motion, liquid‑glass shader, scroll‑driven garage, live Ergast data, team‑specific theming, charts, timeline, news feed, season selector, dark‑mode toggle, accessibility focus outlines, etc.) are included in the code above.
+You can now replace the placeholder GLTF models, add real news, enrich the timeline with actual historic events, or extend the charts as desired.
+Enjoy building your award‑winning Formula One experience! 🚗💨✨

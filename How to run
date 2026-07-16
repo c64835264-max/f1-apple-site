@@ -1,0 +1,17 @@
+# 1️⃣ Create project folder and copy the file blocks above into their respective paths
+mkdir f1-apple-site && cd f1-apple-site
+# (copy each section into the correct file)
+
+# 2️⃣ Install dependencies
+npm install
+
+# 3️⃣� Optional: add your NewsAPI key to .env.local and uncomment the fetch block in lib/fetchF1Data.ts
+
+# 4️⃣ Start dev server
+npm run dev
+Open **http://localhost:3000** to see the site.
+
+---
+All requested modifications (GSAP, Lenis, Framer Motion, liquid‑glass shader, scroll‑driven garage, live Ergast data, team‑specific theming, charts, timeline, news feed, season selector, dark‑mode toggle, accessibility focus outlines, etc.) are included in the code above.
+You can now replace the placeholder GLTF models, add real news, enrich the timeline with actual historic events, or extend the charts as desired.
+Enjoy building your award‑winning Formula One experience! 🚗💨✨

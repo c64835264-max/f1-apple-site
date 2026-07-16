@@ -1,0 +1,48 @@
+#!/bin/bash
+set -e
+# Helper to extract section between markers
+extract_section() {
+    local start="$1"
+    local end="$2"
+    awk "/^## $start$/,/^## / { if (!/^## $start$/ && !/^## /) print }" combined.txt
+}
+# Create directories
+mkdir -p src/app src/components src/lib src/hooks src/styles src/components/ui \
+        src/app/(teams) src/app/(teams)/[team] src/app/(teams)/[team]/components \
+        src/app/(standings) public/models
+# Write each file
+cat > package.json <<'EOF'
+{
+  "name": "f1-apple-site",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@react-three/drei": "^9.105.0",
+    "@react-three/fiber": "^8.15.11",
+    "framer-motion": "^11.0.8",
+    "gsap": "^3.12.5",
+    "lenis": "^1.0.35",
+    "next": "14.2.3",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "recharts": "^2.12.2",
+    "three": "^0.162.0"
+  },
+  "devDependencies": {
+    "@types/node": "20.11.24",
+    "@types/react": "18.2.61",
+    "@types/react-dom": "18.2.19",
+    "@types/three": "^0.162.0",
+    "@types/recharts": "^2.12.0",
+    "autoprefixer": "10.4.17",
+    "postcss": "8.4.35",
+    "tailwindcss": "3.4.1",
+    "typescript": "5.3.3"
+  }
+}

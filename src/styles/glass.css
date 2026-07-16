@@ -1,0 +1,9 @@
+/* This file is imported via Tailwind – keep for reference */
+.glass-panel {
+  @apply backdrop-blur-lg bg-white/10 border border-white/20 rounded-xl shadow-2xl;
+}
+.glass-panel.dark {
+  @apply bg-black/20 border-white/10;
+}
+
+
