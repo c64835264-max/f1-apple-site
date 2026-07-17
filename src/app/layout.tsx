@@ -1,5 +1,5 @@
 import "./globals.css";
-import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
+import { CssBaseline, ThemeProvider } from "@mui/material";
 import dynamic from "next/dynamic";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { Navbar } from "@/components/Navbar";
@@ -21,12 +21,13 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const theme = createTheme({
+  // Create a plain theme object instead of using createTheme to avoid SSR issues
+  const theme = {
     palette: {
       mode: "dark",
       primary: { main: "#dc2626" },
     },
-  });
+  };
 
   return (
     <html lang="en" className="scroll-smooth">
