@@ -1,6 +1,8 @@
+"use client";
+
 import "./globals.css";
 import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
-import { Canvas } from "@react-three/fiber";
+// import { Canvas } from "@react-three/fiber";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { Navbar } from "@/components/Navbar";
 import SeasonProvider from "./SeasonProvider";
@@ -34,18 +36,8 @@ export default function RootLayout({
             <Navbar />
             {/* Main content area – season is passed via context */}
             <SeasonProvider>
-              <Canvas
-                camera={{ position: [0, 2, 10], fov: 60 }}
-                style={{ height: "100vh", width: "100vw" }}
-              >
-                <Suspense fallback={
-                  <div className="absolute inset-0 flex items-center justify-center z-50">
-                    <LoadingSpinner />
-                  </div>
-                }>
-                  {children}
-                </Suspense>
-              </Canvas>
+              {/* Removed Canvas for now */}
+              {children}
             </SeasonProvider>
           </div>
         </ThemeProvider>
