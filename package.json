@@ -11,7 +11,8 @@
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
-    "@mui/material": "^9.2.0",
+    "@mui/icons-material": "^5.18.0",
+    "@mui/material": "^5.18.0",
     "@react-three/drei": "^9.105.0",
     "@react-three/fiber": "^8.15.11",
     "gsap": "^3.12.5",
