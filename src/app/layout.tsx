@@ -1,12 +1,14 @@
-"use client";
-
 import "./globals.css";
 import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
-// import { Canvas } from "@react-three/fiber";
+import dynamic from "next/dynamic";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { Navbar } from "@/components/Navbar";
 import SeasonProvider from "./SeasonProvider";
 import { Suspense } from "react";
+
+const Canvas = dynamic(() => import("@react-three/fiber").then(mod => mod.Canvas), {
+  ssr: false,
+});
 
 export const metadata = {
   title: "McLearn P1 – Apple‑F1 Experience",
@@ -36,8 +38,18 @@ export default function RootLayout({
             <Navbar />
             {/* Main content area – season is passed via context */}
             <SeasonProvider>
-              {/* Removed Canvas for now */}
-              {children}
+              <Canvas
+                camera={{ position: [0, 2, 10], fov: 60 }}
+                style={{ height: "100vh", width: "100vw" }}
+              >
+                <Suspense fallback={
+                  <div className="absolute inset-0 flex items-center justify-center z-50">
+                    <LoadingSpinner />
+                  </div>
+                }>
+                  {children}
+                </Suspense>
+              </Canvas>
             </SeasonProvider>
           </div>
         </ThemeProvider>
