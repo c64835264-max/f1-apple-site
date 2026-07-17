@@ -1,8 +1,10 @@
 "use client";
 
-import { useLoader, useRef } from "@react-three/fiber";
+import { useLoader } from "@react-three/fiber";
+import { useRef } from "react";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { gsap } from "gsap";
+import * as THREE from "three";
 import { vertexGLSL, fragmentGLSL } from "@/lib/glassShader";
 
 interface Props {

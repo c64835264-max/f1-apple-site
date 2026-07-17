@@ -1,5 +1,7 @@
+  "use client";
+"use client";
 import Link from "next/link";
-import { useSeason } from "@/app/SeasonContext";
+import { useSeason } from "@/app/SeasonProvider";
 import { getConstructorStandings, getDriverStandings } from "@/lib/fetchF1Data";
 import { formatNumber } from "@/lib/utils";
 import { useEffect, useState } from "react";

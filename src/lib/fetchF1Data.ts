@@ -73,7 +73,7 @@ export const getRaceSchedule = cache(async (season: string) => {
  * Replace with your own NewsAPI key (add NEXT_PUBLIC_NEWS_API_KEY to .env.local)
  * and uncomment the fetch block below.
  */
-export const getLatestNews = cache(async (teamName: string) => {
+export const getLatestNews = cache(async (teamName: string): Promise<NewsArticle[]> => {
   /*
   const key = process.env.NEXT_PUBLIC_NEWS_API_KEY;
   if (!key) return []; // fallback if no key provided

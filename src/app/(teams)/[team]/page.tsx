@@ -1,21 +1,18 @@
+"use client";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { useParams } from "next/navigation";
-import { useSeason } from "@/app/SeasonContext";
+import { useSeason } from "@/app/SeasonProvider";
 import { getConstructorStandings, getDriverStandings, getRaceSchedule } from "@/lib/fetchF1Data";
 import { TEAM_MAP } from "@/lib/utils";
-import { Header } from "./Header";
-import { HeroSection } from "./HeroSection";
-import { CurrentSeason } from "./CurrentSeason";
-import { TeamHistory } from "./TeamHistory";
-import { TeamOverview } from "./TeamOverview";
-import { NewsFeed } from "./NewsFeed";
+import { Header } from "./components/Header";
+import { HeroSection } from "./components/HeroSection";
+import { CurrentSeason } from "./components/CurrentSeason";
+import { TeamHistory } from "./components/TeamHistory";
+import { TeamOverview } from "./components/TeamOverview";
+import { NewsFeed } from "./components/NewsFeed";
 import { useEffect, useState } from "react";
 
-export const generateStaticParams = () => {
-  // Return all team keys for static generation
-  return Object.keys(TEAM_MAP).map((key) => ({ team: key }));
-};
 
 export default function TeamPage() {
   const params = useParams<{ team: string }>();
@@ -48,7 +45,7 @@ export default function TeamPage() {
   // Inline style to set CSS variable
   const mainStyle = {
     "--color-primary": team.color,
-  };
+  } as any;
 
   if (!dataReady) {
     return (

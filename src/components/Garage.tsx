@@ -3,6 +3,9 @@
 import { useThree } from "@react-three/fiber";
 import { useLoader } from "@react-three/fiber";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
+import { Clock } from "three";
+import { Vector3 } from "three";
+import { GlassCar } from "./GlassCar";
 import { useEffect } from "react";
 import { vertexGLSL, fragmentGLSL } from "@/lib/glassShader";
 import { TEAMS } from "@/lib/teamsData";
@@ -12,7 +15,7 @@ export function Garage({ scrollProgress }: { scrollProgress: number }) {
 
   // Update uTime uniform each frame
   useEffect(() => {
-    const clock = new THREE.Clock();
+    const clock = new Clock();
     const animate = () => {
       requestAnimationFrame(animate);
       const elapsed = clock.getElapsedTime();
@@ -25,8 +28,8 @@ export function Garage({ scrollProgress }: { scrollProgress: number }) {
 
   // Camera lerp based on scrollProgress (0 = interior, 1 = track view)
   useEffect(() => {
-    const startPos = new THREE.Vector3(0, 2, 10); // interior
-    const endPos = new THREE.Vector3(0, 8, -15);   // track view
+    const startPos = new Vector3(0, 2, 10); // interior
+    const endPos = new Vector3(0, 8, -15);   // track view
     camera.position.lerpVectors(startPos, endPos, scrollProgress);
     // Optionally look at origin
     camera.lookAt(0, 0, 0);
