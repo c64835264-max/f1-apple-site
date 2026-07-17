@@ -1,11 +1,18 @@
 'use client';
 
 import { motion, useTransform } from "framer-motion";
+import { useEffect, useState } from "react";
 
 interface Props {
   teamName: string;
 }
 export function TeamHistory({ teamName }: Props) {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   // Mock timeline – replace with real data per team if desired
   const timelineData = [
     { year: "2010", title: "First Pole Position", description: "Description text…" },
@@ -27,24 +34,36 @@ export function TeamHistory({ teamName }: Props) {
 
         {/* Timeline items – staggered animation */}
         {timelineData.map((item, idx) => (
-          <motion.div
-            key={item.year}
-            className="absolute left-2 top-[calc(10%+_idx*10%)] w-64 pl-4 pr-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: idx * 0.15 }}
-          >
-            <div className="glass-panel p-4">
-              <h3 className="font-semibold mb-1">
-                {item.year} – {item.title}
-              </h3>
-              <p className="text-sm">{item.description}</p>
+          isClient ? (
+            <motion.div
+              key={item.year}
+              className="absolute left-2 top-[calc(10%+_idx*10%)] w-64 pl-4 pr-4"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: idx * 0.15 }}
+            >
+              <div className="glass-panel p-4">
+                <h3 className="font-semibold mb-1">
+                  {item.year} – {item.title}
+                </h3>
+                <p className="text-sm">{item.description}</p>
+              </div>
+            </motion.div>
+          ) : (
+            <div
+              key={item.year}
+              className="absolute left-2 top-[calc(10%+_idx*10%)] w-64 pl-4 pr-4"
+            >
+              <div className="glass-panel p-4">
+                <h3 className="font-semibold mb-1">
+                  {item.year} – {item.title}
+                </h3>
+                <p className="text-sm">{item.description}</p>
+              </div>
             </div>
-          </motion.div>
+          )
         ))}
       </div>
     </section>
   );
 }
-
-
