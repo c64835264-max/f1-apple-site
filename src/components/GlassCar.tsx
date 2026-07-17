@@ -21,8 +21,8 @@ export function GlassCar({
   scale = 1,
 }: Props) {
   const gltf = useLoader(GLTFLoader, `/models/${color.replace("#", "")}.glb`);
-  const meshRef = useRef<THREE.Mesh | null>(null);
-  const mesh = gltf.scene.children[0] as THREE.Mesh;
+  const meshRef = useRef<any>(null);
+  const mesh = gltf.scene.children[0] as any;
 
   // Apply liquid‑glass material
   mesh.material = new THREE.ShaderMaterial({
