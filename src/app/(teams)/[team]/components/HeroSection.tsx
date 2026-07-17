@@ -1,3 +1,5 @@
+'use client';
+
 import { GlassCar } from "@/components/GlassCar";
 import { motion } from "framer-motion";
 
