@@ -1,3 +1,5 @@
+"use client";
+
 import "./globals.css";
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import dynamic from "next/dynamic";
@@ -11,7 +13,7 @@ const Canvas = dynamic(() => import("@react-three/fiber").then(mod => mod.Canvas
 });
 
 export const metadata = {
-  title: "McLearn P1 – Apple‑F1 Experience",
+  title: "McLean P1 – Apple‑F1 Experience",
   description:
     "A premium Liquid‑Glass Formula One website inspired by Apple keynotes.",
 };
@@ -21,7 +23,7 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Create a plain theme object instead of using createTheme to avoid SSR issues
+  // Create a plain theme object to avoid createTheme SSR issues
   const theme = {
     palette: {
       mode: "dark",
