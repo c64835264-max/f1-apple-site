@@ -1,16 +1,13 @@
 'use client';
 
 import { GlassCar } from "@/components/GlassCar";
-import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
 
-export function HeroSection({ teamName, teamColor }: Props) {
-  const [isClient, setIsClient] = useState(false);
+interface Props {
+  teamName: string;
+  teamColor: string; // hex with #
+}
 
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
+export default function HeroSection({ teamName, teamColor }: Props) {
   return (
     <section className="relative h-[80vh] flex items-center justify-center overflow-hidden">
       {/* Dark overlay */}
@@ -30,21 +27,11 @@ export function HeroSection({ teamName, teamColor }: Props) {
         <p className="text-lg mb-6">
           Cutting‑edge technology meets relentless performance.
         </p>
-        {isClient ? (
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="px-6 py-3 bg-white/20 text-white rounded-lg hover:bg-white/30 transition"
-          >
-            Explore the Team
-          </motion.button>
-        ) : (
-          <button
-            className="px-6 py-3 bg-white/20 text-white rounded-lg hover:bg-white/30 transition"
-          >
-            Explore the Team
-          </button>
-        )}
+        <button
+          className="px-6 py-3 bg-white/20 text-white rounded-lg hover:bg-white/30 transition"
+        >
+          Explore the Team
+        </button>
       </div>
     </section>
   );

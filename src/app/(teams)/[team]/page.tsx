@@ -6,13 +6,12 @@ import { useSeason } from "@/app/SeasonProvider";
 import { getConstructorStandings, getDriverStandings, getRaceSchedule } from "@/lib/fetchF1Data";
 import { TEAM_MAP } from "@/lib/utils";
 import { Header } from "./components/Header";
-import { HeroSection } from "./components/HeroSection";
+import HeroSection from "./components/HeroSection";
 import { CurrentSeason } from "./components/CurrentSeason";
-import { TeamHistory } from "./components/TeamHistory";
+import TeamHistory from "./components/TeamHistory";
 import { TeamOverview } from "./components/TeamOverview";
 import { NewsFeed } from "./components/NewsFeed";
 import { useEffect, useState } from "react";
-
 
 export default function TeamPage() {
   const params = useParams<{ team: string }>();
@@ -75,5 +74,3 @@ export default function TeamPage() {
     </main>
   );
 }
-
-
